@@ -5,8 +5,22 @@ from fastapi import HTTPException, UploadFile
 EMPLOYEE_ID_ALIASES = {"employee_id", "emp_id", "employee id", "employeeid", "empid"}
 
 
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+
 async def read_upload(upload_file: UploadFile) -> pd.DataFrame:
     raw = await upload_file.read()
+
+    if len(raw) > MAX_FILE_SIZE:
+        size_mb = len(raw) / (1024 * 1024)
+        raise HTTPException(
+            status_code=413,
+            detail=(
+                f"'{upload_file.filename}' is {size_mb:.1f} MB, which exceeds the 10 MB limit. "
+                "Please reduce the file size and try again."
+            ),
+        )
+
     buffer = io.BytesIO(raw)
 
     filename = (upload_file.filename or "").lower()

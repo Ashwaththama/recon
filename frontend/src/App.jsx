@@ -28,6 +28,19 @@ export default function App() {
     }
   }
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+
+  function handleFileSelect(setter, file) {
+    if (file.size > MAX_FILE_SIZE) {
+      setErrorMsg(`"${file.name}" exceeds the 10 MB limit (${(file.size / (1024 * 1024)).toFixed(1)} MB). Please reduce the file size and try again.`)
+      setStatus('error')
+      return
+    }
+    setter(file)
+    setStatus('idle')
+    setErrorMsg('')
+  }
+
   const canRun = hrFile && payrollFile && status !== 'loading'
 
   return (
@@ -41,13 +54,13 @@ export default function App() {
         <div className="upload-grid">
           <div className="upload-section">
             <h2>HR File</h2>
-            <DropZone label="Upload HR Data" onFileSelect={setHrFile} />
+            <DropZone label="Upload HR Data" onFileSelect={(f) => handleFileSelect(setHrFile, f)} />
             <FileCard file={hrFile} onRemove={() => { setHrFile(null); setStatus('idle') }} />
           </div>
 
           <div className="upload-section">
             <h2>Payroll File</h2>
-            <DropZone label="Upload Payroll Data" onFileSelect={setPayrollFile} />
+            <DropZone label="Upload Payroll Data" onFileSelect={(f) => handleFileSelect(setPayrollFile, f)} />
             <FileCard file={payrollFile} onRemove={() => { setPayrollFile(null); setStatus('idle') }} />
           </div>
         </div>
