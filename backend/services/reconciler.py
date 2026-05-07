@@ -1,8 +1,24 @@
+import math
 import pandas as pd
 
 
-def _normalize(val) -> str:
-    return str(val).strip().lower()
+def _values_match(a, b) -> bool:
+    a_null = pd.isna(a)
+    b_null = pd.isna(b)
+    if a_null and b_null:
+        return True
+    if a_null or b_null:
+        return False
+
+    # Numeric comparison with tolerance to avoid false positives like 50000 vs 50000.0
+    try:
+        fa = float(str(a).strip().replace(',', ''))
+        fb = float(str(b).strip().replace(',', ''))
+        return math.isclose(fa, fb, rel_tol=1e-9, abs_tol=1e-9)
+    except (ValueError, TypeError):
+        pass
+
+    return str(a).strip().lower() == str(b).strip().lower()
 
 
 def run_reconciliation(hr_df: pd.DataFrame, payroll_df: pd.DataFrame) -> dict:
@@ -43,7 +59,7 @@ def run_reconciliation(hr_df: pd.DataFrame, payroll_df: pd.DataFrame) -> dict:
         for col in common_columns:
             hr_val = hr_df.loc[emp_id, col]
             pay_val = payroll_df.loc[emp_id, col]
-            if _normalize(hr_val) != _normalize(pay_val):
+            if not _values_match(hr_val, pay_val):
                 mismatch_rows.append({
                     "Employee_ID": emp_id,
                     "Column_Name": col,
